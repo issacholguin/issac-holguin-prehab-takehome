@@ -21,3 +21,8 @@ OR if you want to run the dev container:
 3. Open the repository in VSCode
 4. Run `Dev Containers: Reopen in Container`
 5. Once the container is running in the /workspaces/issac-holguin-prehab-takehome directory, refer to top of README for instructions on running or building the project
+
+Curls for testing:
+Auth Routes:
+/auth/register
+curl -X POST http://localhost:3000/auth/register -H "Content-Type: application/json" -d '{"username": "test", "password": "test"}'
