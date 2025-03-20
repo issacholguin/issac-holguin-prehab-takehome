@@ -1,4 +1,4 @@
-.vscode
+.vscode/settings.json
 .env
 .env.local
 .env.development

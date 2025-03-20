@@ -18,6 +18,15 @@ export const users = table(
 
 export const usersSelectSchema = createSelectSchema(users);
 export const usersInsertSchema = createInsertSchema(users, {
+  // do not pass an id, throw error if it is passed
+  id: z
+    .number()
+    .optional()
+    .refine((id) => id === undefined, {
+      message: "Id is not allowed",
+    }),
   username: z.string().min(1, { message: "Username is required" }),
   password: z.string().min(1, { message: "Password is required" }),
 });
+
+export type UserInsert = Omit<z.infer<typeof usersInsertSchema>, "id">;
