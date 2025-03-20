@@ -1,4 +1,4 @@
-.vscode
+.vscode/settings.json
 .env
 .env.local
 .env.development
@@ -9,3 +9,8 @@ node_modules
 dist
 
 data/
+
+# Logs
+logs
+*.log
+npm-debug.log*
