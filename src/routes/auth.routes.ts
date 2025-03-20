@@ -4,6 +4,7 @@ import {
   usersInsertSchema,
   usersLoginSchema,
   UserLogin,
+  User,
 } from "../db/schema";
 import { validateSchema } from "../middleware/validate-schema.middleware";
 import { createUser, getUserByUsername } from "../service/users.service";
@@ -13,15 +14,23 @@ import {
   generateRefreshToken,
   TokenPayload,
 } from "../utils/jwt.utils";
+import { comparePasswords } from "../utils/hash.utils";
+import { AppError } from "../types/express/error";
+
 const router = Router();
 
+/**
+ * @route POST /auth/register
+ * @desc Register a user
+ * @access Public
+ */
 const registerHandler: RequestHandler = async (req, res, next) => {
   try {
     const data = req.body as UserInsert;
 
     const existingUser = await getUserByUsername(data.username);
     if (existingUser) {
-      throw new Error("Username already exists");
+      throw new AppError("Username already exists", 400);
     }
 
     const user = await createUser(data);
@@ -40,12 +49,11 @@ const registerHandler: RequestHandler = async (req, res, next) => {
       accessToken,
       refreshToken,
     });
-    res.status(201).json({ message: "User created successfully", user });
   } catch (error) {
-    if (error instanceof Error && error.message === "Username already exists") {
+    if (error instanceof AppError) {
       next({
-        status: 400,
-        message: "Username already exists",
+        status: error.status,
+        message: error.message,
       });
       return;
     }
@@ -60,10 +68,55 @@ const registerHandler: RequestHandler = async (req, res, next) => {
 
 router.post("/register", validateSchema(usersInsertSchema), registerHandler);
 
+/**
+ * @route POST /auth/login
+ * @desc Login a user
+ * @access Public
+ */
 const loginHandler: RequestHandler = async (req, res, next) => {
   try {
     const data = req.body as UserLogin;
+    const user = await getUserByUsername(data.username);
+
+    if (!user) {
+      throw new AppError("Invalid username or password", 401);
+    }
+
+    const isPasswordValid = await comparePasswords(
+      data.password,
+      user.password
+    );
+    if (!isPasswordValid) {
+      throw new AppError("Invalid username or password", 401);
+    }
+
+    const userWithoutPassword = {
+      id: user.id,
+      username: user.username,
+    } as User;
+
+    const tokenPayload: TokenPayload = {
+      userId: user.id,
+      username: user.username,
+    };
+
+    const accessToken = generateAccessToken(tokenPayload);
+    const refreshToken = generateRefreshToken(tokenPayload);
+
+    res.status(200).json({
+      message: "User logged in successfully",
+      user: userWithoutPassword,
+      accessToken,
+      refreshToken,
+    });
   } catch (error) {
+    if (error instanceof AppError) {
+      next({
+        status: error.status,
+        message: error.message,
+      });
+      return;
+    }
     next({
       status: 500,
       message: "Internal server error",
