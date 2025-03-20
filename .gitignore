@@ -9,3 +9,8 @@ node_modules
 dist
 
 data/
+
+# Logs
+logs
+*.log
+npm-debug.log*

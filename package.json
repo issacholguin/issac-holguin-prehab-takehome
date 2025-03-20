@@ -1,11 +1,17 @@
 {
   "name": "issac-holguin-prehab-takehome",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "dev": "nodemon --ext ts --exec ts-node src/app.ts"
+    "db:migrate": "npx drizzle-kit migrate --config drizzle-dev.config.ts",
+    "db:migrate:prod": "npx drizzle-kit migrate --config drizzle-prod.config.ts",
+    "db:generate": "npx drizzle-kit generate",
+    "clean": "rm -rf dist",
+    "build:local": "npm run clean && tsc && npm run postbuild",
+    "build": "npm run clean && tsc && npm run postbuild",
+    "postbuild": "mkdir -p dist/data && touch dist/data/database.sqlite && npm run db:migrate:prod",
+    "start": "NODE_ENV=production node dist/src/app.js",
+    "dev": "NODE_ENV=development nodemon --ext ts --exec ts-node src/app.ts"
   },
   "keywords": [],
   "author": "",
@@ -13,7 +19,11 @@
   "description": "",
   "dependencies": {
     "better-sqlite3": "^11.9.1",
-    "express": "^4.21.2"
+    "drizzle-orm": "^0.40.1",
+    "drizzle-zod": "^0.7.0",
+    "express": "^4.21.2",
+    "winston": "^3.17.0",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",
@@ -21,6 +31,7 @@
     "@types/node": "^22.13.10",
     "@typescript-eslint/eslint-plugin": "^8.26.1",
     "@typescript-eslint/parser": "^8.26.1",
+    "drizzle-kit": "^0.30.5",
     "eslint": "^9.22.0",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.3",
