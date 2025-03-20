@@ -286,7 +286,7 @@ describe("Auth Routes", () => {
       expect(mockUsersService.getUserById).not.toHaveBeenCalled();
     });
 
-    it("should return 400 if refresh token is missing", async () => {
+    it("should return 401 if refresh token is missing", async () => {
       const response = await request(app)
         .post("/auth/refresh-token")
         .send({})
