@@ -32,6 +32,11 @@ export const usersInsertSchema = createInsertSchema(users, {
     message: "Password must be less than 100 characters",
   }),
 });
+export const usersLoginSchema = usersInsertSchema.pick({
+  username: true,
+  password: true,
+});
 
 export type UserInsert = Omit<z.infer<typeof usersInsertSchema>, "id">;
+export type UserLogin = z.infer<typeof usersLoginSchema>;
 export type User = Omit<z.infer<typeof usersSelectSchema>, "password">;

@@ -28,6 +28,7 @@ Instructions for setting up the environment:
    this will create
    .env.local for development
    .env.test for testing
+   and add the JWT_SECRET to both files
 
 Curls for testing:
 Auth Routes:
@@ -36,9 +37,13 @@ curl -X POST http://localhost:3000/auth/register -H "Content-Type: application/j
 
 improvements:
 
+setup assumes we want an access + refresh token pair (vs doing some verification of the user/email) but since we only have one field username, it was safe to assume we'd be logged in.
+
 in a real world setting i would opt to dynamically load secrets from a vault like AWS Secrets Manager , but for now we are just using environment variables..
 
 i would also add a lot more tests, ideally integration tests for the auth and user
+
+constants around the messages we send to the client
 
 ---
 

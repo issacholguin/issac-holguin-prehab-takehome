@@ -45,6 +45,8 @@ describe("Auth Routes", () => {
       expect(response.body).toEqual({
         message: "User created successfully",
         user: expect.any(Object),
+        accessToken: expect.any(String),
+        refreshToken: expect.any(String),
       });
       expect(response.body.user.password).toBeUndefined();
 
