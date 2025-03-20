@@ -7,12 +7,17 @@ import {
   User,
 } from "../db/schema";
 import { validateSchema } from "../middleware/validate-schema.middleware";
-import { createUser, getUserByUsername } from "../service/users.service";
+import {
+  createUser,
+  getUserById,
+  getUserByUsername,
+} from "../service/users.service";
 import { logger } from "../config/logger";
 import {
   generateAccessToken,
   generateRefreshToken,
   TokenPayload,
+  verifyToken,
 } from "../utils/jwt.utils";
 import { comparePasswords } from "../utils/hash.utils";
 import { AppError } from "../types/express/error";
@@ -126,5 +131,51 @@ const loginHandler: RequestHandler = async (req, res, next) => {
 };
 
 router.post("/login", validateSchema(usersLoginSchema), loginHandler);
+
+/**
+ * @route POST /auth/refresh-token
+ * @desc Refresh a user's access token
+ * @access Public
+ */
+const refreshTokenHandler: RequestHandler = async (req, res, next) => {
+  try {
+    const data = req.body as { refreshToken: string };
+    const decodedToken = verifyToken(data.refreshToken);
+
+    const user = await getUserById(decodedToken.userId);
+    if (!user) {
+      throw new AppError("User not found", 404);
+    }
+
+    const tokenPayload: TokenPayload = {
+      userId: user.id,
+      username: user.username,
+    };
+
+    const accessToken = generateAccessToken(tokenPayload);
+    const refreshToken = generateRefreshToken(tokenPayload);
+
+    res.status(200).json({
+      message: "Access token refreshed successfully",
+      accessToken,
+      refreshToken,
+    });
+  } catch (error) {
+    if (error instanceof AppError) {
+      next({
+        status: error.status,
+        message: error.message,
+      });
+      return;
+    }
+    next({
+      status: 500,
+      message: "Internal server error",
+      error,
+    });
+  }
+};
+
+router.post("/refresh-token", refreshTokenHandler);
 
 export default router;

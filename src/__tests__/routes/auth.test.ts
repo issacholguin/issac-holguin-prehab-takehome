@@ -4,6 +4,7 @@ import * as usersService from "../../service/users.service";
 import { users } from "../../db/schema";
 import type { InferSelectModel } from "drizzle-orm";
 import { hashPassword } from "../../utils/hash.utils";
+import { generateRefreshToken } from "../../utils/jwt.utils";
 
 type User = InferSelectModel<typeof users>;
 
@@ -11,6 +12,7 @@ jest.mock("../../service/users.service", () => ({
   ...jest.requireActual("../../service/users.service"),
   getUserByUsername: jest.fn(),
   createUser: jest.fn(),
+  getUserById: jest.fn(),
 }));
 
 const mockUsersService = usersService as jest.Mocked<typeof usersService>;
@@ -216,6 +218,85 @@ describe("Auth Routes", () => {
       expect(response.body).toEqual({
         message: "Invalid username or password",
       });
+    });
+  });
+
+  describe("POST /auth/refresh-token", () => {
+    let validRefreshToken: string;
+    const testUser = {
+      id: 1,
+      username: "testuser",
+    };
+
+    beforeEach(() => {
+      jest.resetAllMocks();
+      // Generate a valid refresh token directly
+      validRefreshToken = generateRefreshToken({
+        userId: testUser.id,
+        username: testUser.username,
+      });
+
+      // Mock getUserById to return a valid user
+      mockUsersService.getUserById.mockResolvedValue({
+        ...testUser,
+        password: "hashedpassword",
+      });
+    });
+
+    it("should refresh tokens successfully with valid refresh token", async () => {
+      const response = await request(app)
+        .post("/auth/refresh-token")
+        .send({ refreshToken: validRefreshToken })
+        .expect(200);
+
+      expect(response.body).toEqual({
+        message: "Access token refreshed successfully",
+        accessToken: expect.any(String),
+        refreshToken: expect.any(String),
+      });
+
+      expect(mockUsersService.getUserById).toHaveBeenCalledWith(testUser.id);
+    });
+
+    it("should return 404 if user no longer exists", async () => {
+      mockUsersService.getUserById.mockResolvedValue(
+        undefined as unknown as User
+      );
+
+      const response = await request(app)
+        .post("/auth/refresh-token")
+        .send({ refreshToken: validRefreshToken })
+        .expect(404);
+
+      expect(response.body).toEqual({
+        message: "User not found",
+      });
+    });
+
+    it("should return 401 for invalid refresh token", async () => {
+      const response = await request(app)
+        .post("/auth/refresh-token")
+        .send({ refreshToken: "invalid.refresh.token" })
+        .expect(401);
+
+      expect(response.body).toEqual({
+        message: "Invalid token",
+      });
+
+      expect(mockUsersService.getUserById).not.toHaveBeenCalled();
+    });
+
+    it("should return 400 if refresh token is missing", async () => {
+      const response = await request(app)
+        .post("/auth/refresh-token")
+        .send({})
+        .expect(401);
+
+      expect(response.body).toEqual({
+        message: "Invalid token",
+      });
+
+      expect(mockUsersService.getUserById).not.toHaveBeenCalled();
     });
   });
 });
