@@ -8,10 +8,10 @@ export const app = express();
 
 // Create a middleware to log HTTP requests
 // Only log requests in local development environment
-// const isLocalDevelopment = process.env.NODE_ENV === "development";
-// if (isLocalDevelopment) {
-//   // app.use(enableLogging);
-// }
+const isLocalDevelopment = process.env.NODE_ENV === "development";
+if (isLocalDevelopment) {
+  app.use(enableLogging);
+}
 
 app.use(express.json());
 app.use("/auth", authRoutes);

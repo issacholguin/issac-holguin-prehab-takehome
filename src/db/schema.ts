@@ -25,8 +25,13 @@ export const usersInsertSchema = createInsertSchema(users, {
     .refine((id) => id === undefined, {
       message: "Id is not allowed",
     }),
-  username: z.string().min(1, { message: "Username is required" }),
-  password: z.string().min(1, { message: "Password is required" }),
+  username: z.string().min(3, { message: "Username is required" }).max(20, {
+    message: "Username must be less than 20 characters",
+  }),
+  password: z.string().min(6, { message: "Password is required" }).max(100, {
+    message: "Password must be less than 100 characters",
+  }),
 });
 
 export type UserInsert = Omit<z.infer<typeof usersInsertSchema>, "id">;
+export type User = Omit<z.infer<typeof usersSelectSchema>, "password">;

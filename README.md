@@ -33,3 +33,81 @@ Curls for testing:
 Auth Routes:
 /auth/register
 curl -X POST http://localhost:3000/auth/register -H "Content-Type: application/json" -d '{"username": "test", "password": "test"}'
+
+improvements:
+
+in a real world setting i would opt to dynamically load secrets from a vault like AWS Secrets Manager , but for now we are just using environment variables..
+
+i would also add a lot more tests, ideally integration tests for the auth and user
+
+---
+
+# Prompt:
+
+Build a RESTful API with endpoints that can handle the following requests.
+
+## 1. Using JWT-based authentication:
+
+DONE , /auth/register
+a. Create user with the following fields
+i. Username  
+ ii. Password
+
+DONE , /auth/login
+b. Authenticate a user  
+c. Refresh an access token
+
+## 2. An authenticated user can:
+
+a. Create a new exercise with the following properties:
+i. Name  
+ ii. Description  
+ iii. Difficulty level on a scale of 1-5  
+ iv. Is public (boolean)  
+ b. Modify an exercise’s name, description, and/or difficulty level  
+ c. Delete an exercise
+
+## 3. All users can:
+
+a. Retrieve a list of all public exercises  
+ i. Can be sorted by the following:
+
+1.  Difficulty level  
+    ii. Can be searched/filtered by the following fields:
+1.  Name
+1.  Description
+1.  Difficulty level  
+    iii. Include non-public exercises that were created by the user sending the request  
+    b. Retrieve a specific exercise  
+    i. Not public exercises cannot be retrieved unless the user sending the request is the creator of the exercise being requested
+
+## Bonus points:
+
+1. An authenticated user can  
+   a. “Favorite” and “Un-favorite” an exercise  
+   b. “Save” and “Un-save” an exercise  
+   c. “Rate” an exercise from 1-5  
+   d. Retrieve a combined list of the user’s own favorite and saved exercises  
+    i. Include a property with each record returned indicating whether the user “saved” and/or “favorited” that specific exercise
+
+2. When retrieving a list of all public exercises (see 2a in Prompt above)  
+   a. Also include a count of “saves” or “favorites” for each exercise record returned
+
+3. Retrieve a specific exercise  
+   a. Include the following fields:  
+    i. Name  
+    ii. Description  
+    iii. Difficulty level  
+    iv. Count of favorites  
+    v. Count of saves  
+   b. Not public exercises cannot be retrieved unless the user sending the request is the creator of the exercise being requested
+
+4. Retrieve a list of users that have saved or favorited a specific exercise
+
+5. Include unit tests
+
+6. Include API docs
+
+7. Include a way to execute database/schema migrations
+
+8. Create a multi-column database index of your choice

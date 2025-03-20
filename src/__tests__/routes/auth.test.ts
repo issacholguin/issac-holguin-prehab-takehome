@@ -25,9 +25,10 @@ describe("Auth Routes", () => {
       mockUsersService.getUserByUsername.mockResolvedValue(
         undefined as unknown as User
       );
-      mockUsersService.createUser.mockResolvedValue([
-        { id: 1, username: "testuser", password: "Test123!" },
-      ]);
+      mockUsersService.createUser.mockResolvedValue({
+        id: 1,
+        username: "testuser",
+      });
 
       const validUser = {
         username: "testuser",
@@ -40,10 +41,13 @@ describe("Auth Routes", () => {
         .expect(201)
         .expect("Content-Type", /json/);
 
+      // make sure pasword is not there
       expect(response.body).toEqual({
         message: "User created successfully",
         user: expect.any(Object),
       });
+      expect(response.body.user.password).toBeUndefined();
+
       expect(mockUsersService.getUserByUsername).toHaveBeenCalledWith(
         validUser.username
       );

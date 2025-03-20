@@ -1,11 +1,17 @@
 import { db } from "../config/database";
-import { UserInsert, users } from "../db/schema";
+import { UserInsert, User, users } from "../db/schema";
 import { eq } from "drizzle-orm";
+import { hashPassword } from "../utils/hash.utils";
 
-export const createUser = async (user: UserInsert) => {
+export const createUser = async (
+  user: UserInsert
+): Promise<Omit<User, "password">> => {
+  const hashedPassword = await hashPassword(user.password);
+  user.password = hashedPassword;
   const query = db.insert(users).values(user).returning();
   const createdUser = await query;
-  return createdUser;
+  const { password, ...userWithoutPassword } = createdUser[0];
+  return userWithoutPassword;
 };
 
 export const getUserByUsername = async (username: string) => {
