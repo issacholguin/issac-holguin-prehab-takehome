@@ -22,6 +22,13 @@ OR if you want to run the dev container:
 4. Run `Dev Containers: Reopen in Container`
 5. Once the container is running in the /workspaces/issac-holguin-prehab-takehome directory, refer to top of README for instructions on running or building the project
 
+Instructions for setting up the environment:
+
+1. Run `./setup-env.sh`
+   this will create
+   .env.local for development
+   .env.test for testing
+
 Curls for testing:
 Auth Routes:
 /auth/register
