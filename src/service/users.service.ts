@@ -24,8 +24,8 @@ export const getUserByUsername = async (username: string) => {
   return user;
 };
 
-export const getUserById = async (id: number) => {
+export const getUserById = async (id: number): Promise<User> => {
   const query = db.select().from(users).where(eq(users.id, id));
-  const user = await query;
+  const [user] = await query;
   return user;
 };

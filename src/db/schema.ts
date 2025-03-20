@@ -39,4 +39,6 @@ export const usersLoginSchema = usersInsertSchema.pick({
 
 export type UserInsert = Omit<z.infer<typeof usersInsertSchema>, "id">;
 export type UserLogin = z.infer<typeof usersLoginSchema>;
-export type User = Omit<z.infer<typeof usersSelectSchema>, "password">;
+
+export type User = z.infer<typeof usersSelectSchema>;
+export type UserWithoutPassword = Omit<User, "password">;
