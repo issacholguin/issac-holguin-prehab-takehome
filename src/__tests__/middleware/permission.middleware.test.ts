@@ -24,6 +24,8 @@ describe("updateExercisePermissionGuard", () => {
       allowNonOwnerModification: true,
     });
 
+    let consoleDebugSpy: jest.SpyInstance;
+
     beforeEach(() => {
       jest.clearAllMocks();
       mockNext = jest.fn();
@@ -32,6 +34,11 @@ describe("updateExercisePermissionGuard", () => {
         user: { userId: 123, username: "testuser" },
       };
       mockRes = {};
+      consoleDebugSpy = jest.spyOn(console, "debug");
+    });
+
+    afterEach(() => {
+      consoleDebugSpy.mockClear();
     });
 
     it("should verify owner can modify their own exercise, regardless of public/private status", async () => {
@@ -47,8 +54,10 @@ describe("updateExercisePermissionGuard", () => {
 
       await middleware(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(mockNext).toHaveBeenCalledTimes(1);
-      expect(mockNext).toHaveBeenCalledWith("User is the owner");
+      expect(mockNext).toHaveBeenCalled();
+      expect(consoleDebugSpy).toHaveBeenCalledWith("User is the owner");
+
+      consoleDebugSpy.mockClear();
 
       // Setup2: User is owner of a public exercise
       mockExercisesService.getExerciseById.mockResolvedValue({
@@ -59,11 +68,10 @@ describe("updateExercisePermissionGuard", () => {
         description: "Test Description",
         difficulty: 1,
       });
-
       await middleware(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(mockNext).toHaveBeenCalledTimes(2);
-      expect(mockNext).toHaveBeenCalledWith("User is the owner");
+      expect(mockNext).toHaveBeenCalled();
+      expect(consoleDebugSpy).toHaveBeenCalledWith("User is the owner");
     });
 
     it("should verify a public exercise can be modified by any authenticated user", async () => {
@@ -76,11 +84,11 @@ describe("updateExercisePermissionGuard", () => {
         description: "Test Description",
         difficulty: 1,
       });
-
+      const consoleDebugSpy = jest.spyOn(console, "debug");
       await middleware(mockReq as Request, mockRes as Response, mockNext);
 
       expect(mockNext).toHaveBeenCalledTimes(1);
-      expect(mockNext).toHaveBeenCalledWith(
+      expect(consoleDebugSpy).toHaveBeenCalledWith(
         "All checks passed, user is allowed to modify exercise"
       );
     });

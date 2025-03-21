@@ -1,5 +1,10 @@
 import { RequestHandler, Router } from "express";
-import { createExercise, modifyExercise } from "../service/exercises.service";
+import {
+  createExercise,
+  deleteExercise,
+  getExerciseById,
+  modifyExercise,
+} from "../service/exercises.service";
 import { AppError } from "../types/express/error";
 import { authenticateToken } from "../middleware/auth.middleware";
 import { validateSchema } from "../middleware/validate-schema.middleware";
@@ -75,4 +80,40 @@ router.patch(
   modifyExerciseHandler
 );
 
+/**
+ * @route DELETE /exercises/:id
+ * @desc Delete an exercise
+ * @access Private - Based on permission rules:
+ * - Only the owner can delete their own exercises
+ */
+const deleteExerciseHandler: RequestHandler = async (req, res, next) => {
+  try {
+    const exercise = await getExerciseById(Number(req.params.id));
+
+    if (!exercise) {
+      throw new AppError("Exercise not found", 404);
+    }
+    // check if the exercise is owned by the user
+    if (exercise.userId !== req.user?.userId) {
+      throw new AppError("You are not the owner of this exercise", 403);
+    }
+
+    await deleteExercise(Number(req.params.id));
+
+    res.status(200).json({
+      message: "Exercise deleted successfully",
+      exerciseId: Number(req.params.id),
+    });
+  } catch (error) {
+    if (error instanceof AppError) {
+      next({
+        status: error.status,
+        message: error.message,
+      });
+      return;
+    }
+    next(error);
+  }
+};
+router.delete("/:id", deleteExerciseHandler);
 export default router;

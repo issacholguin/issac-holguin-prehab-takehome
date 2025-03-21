@@ -43,7 +43,8 @@ export const updateExercisePermissionGuard = (
 
       // Early return if user is the owner - owners can always modify their exercises
       if (isOwner) {
-        next("User is the owner");
+        console.debug("User is the owner");
+        next();
         return;
       }
 
@@ -68,8 +69,8 @@ export const updateExercisePermissionGuard = (
           403
         );
       }
-
-      next("All checks passed, user is allowed to modify exercise");
+      console.debug("All checks passed, user is allowed to modify exercise");
+      next();
     } catch (error) {
       if (error instanceof AppError) {
         next(error);

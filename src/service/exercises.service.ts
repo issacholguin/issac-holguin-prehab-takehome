@@ -20,11 +20,14 @@ export const createExercise = async (
   }
 };
 
-export const getExerciseById = async (id: number): Promise<Exercise> => {
+export const getExerciseById = async (id: number): Promise<Exercise | null> => {
   try {
     const query = db.select().from(exercises).where(eq(exercises.id, id));
     const [result] = await query;
-    return { ...result, isPublic: Boolean(result?.isPublic) };
+    if (result) {
+      return { ...result, isPublic: Boolean(result.isPublic) };
+    }
+    return null;
   } catch (error) {
     throw new AppError("Failed to get exercise", 500);
   }
@@ -44,5 +47,20 @@ export const modifyExercise = async (
     return { ...result, isPublic: Boolean(result.isPublic) };
   } catch (error) {
     throw new AppError("Failed to modify exercise", 500);
+  }
+};
+
+export const deleteExercise = async (
+  id: number
+): Promise<{ message: string; id: number }> => {
+  try {
+    const query = db.delete(exercises).where(eq(exercises.id, id));
+    await query;
+    return {
+      message: "Exercise deleted successfully",
+      id,
+    };
+  } catch (error) {
+    throw new AppError("Failed to delete exercise", 500);
   }
 };

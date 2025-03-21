@@ -10,6 +10,8 @@ import { ExercisePermissionRules } from "../../middleware/permission.middleware"
 jest.mock("../../service/exercises.service", () => ({
   createExercise: jest.fn(),
   modifyExercise: jest.fn(),
+  deleteExercise: jest.fn(),
+  getExerciseById: jest.fn(),
 }));
 
 jest.mock("../../middleware/auth.middleware", () => ({
@@ -231,38 +233,139 @@ describe("Exercise Routes", () => {
       });
     });
 
+    it("should return 404 if the exercise does not exist", async () => {
+      const exerciseId = 1;
+      mockExercisesService.modifyExercise.mockRejectedValue(
+        new AppError("Exercise not found", 404)
+      );
+
+      const response = await request(app)
+        .patch(`/exercises/${exerciseId}`)
+        .send({
+          name: "Pushups",
+          description: "Pushups are a great exercise for the chest",
+          difficulty: 1,
+        });
+
+      expect(response.status).toBe(404);
+      expect(response.body.message).toBe("Exercise not found");
+    });
+
     it("should return 401 if no token is provided", async () => {
+      const exerciseId = 1;
+
       mockAuthMiddleware.authenticateToken.mockImplementation(
         (req, res, next) => {
           throw new AppError("Authentication token required", 401);
         }
       );
-      const response = await request(app).patch("/exercises/1").send({
-        name: "Pushups",
-        description: "Pushups are a great exercise for the chest",
-        difficulty: 1,
-      });
+      const response = await request(app)
+        .patch(`/exercises/${exerciseId}`)
+        .send({
+          name: "Pushups",
+          description: "Pushups are a great exercise for the chest",
+          difficulty: 1,
+        });
 
       expect(response.status).toBe(401);
       expect(response.body.message).toBe("Authentication token required");
     });
 
-    it("should return 403 if token is in valid", async () => {
+    it("should return 403 if token is invalid", async () => {
+      const exerciseId = 1;
+
       mockAuthMiddleware.authenticateToken.mockImplementation(
         (req, res, next) => {
           throw new AppError("Invalid token", 403);
         }
       );
-      const response = await request(app).patch("/exercises/1").send({
-        name: "Pushups",
-        description: "Pushups are a great exercise for the chest",
-        difficulty: 1,
-      });
+      const response = await request(app)
+        .patch(`/exercises/${exerciseId}`)
+        .send({
+          name: "Pushups",
+          description: "Pushups are a great exercise for the chest",
+          difficulty: 1,
+        });
 
       expect(response.status).toBe(403);
       expect(response.body.message).toBe("Invalid token");
     });
+  });
 
-    it;
+  describe("DELETE /exercises/:id", () => {
+    const mockUser = {
+      userId: 1,
+      username: "testuser",
+    };
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      // bypass auth middleware
+      mockAuthMiddleware.authenticateToken.mockImplementation(
+        (req, res, next) => {
+          req.user = mockUser;
+          next();
+        }
+      );
+
+      // bypass permission guard middleware
+      mockPermissionGuardMiddleware.updateExercisePermissionGuard.mockImplementation(
+        (rules: ExercisePermissionRules) =>
+          async (req: Request, res: Response, next: NextFunction) => {
+            next();
+          }
+      );
+    });
+
+    it("should delete an exercise successfully", async () => {
+      const exerciseId = 1;
+
+      mockExercisesService.getExerciseById.mockResolvedValue({
+        id: exerciseId,
+        name: "Test Exercise",
+        description: "Test Description",
+        difficulty: 1,
+        isPublic: true,
+        userId: mockUser.userId,
+      });
+
+      mockExercisesService.deleteExercise.mockResolvedValue({
+        message: "Exercise deleted successfully",
+        id: exerciseId,
+      });
+
+      const response = await request(app).delete(`/exercises/${exerciseId}`);
+      expect(response.status).toBe(200);
+      expect(response.body.message).toBe("Exercise deleted successfully");
+    });
+
+    it("should return 403 if user is not the owner of the exercise", async () => {
+      const exerciseId = 1;
+
+      mockExercisesService.getExerciseById.mockResolvedValue({
+        id: exerciseId,
+        name: "Test Exercise",
+        description: "Test Description",
+        difficulty: 1,
+        isPublic: true,
+        userId: 2, // Different user ID than the authenticated user
+      });
+
+      const response = await request(app).delete(`/exercises/${exerciseId}`);
+      expect(response.status).toBe(403);
+      expect(response.body.message).toBe(
+        "You are not the owner of this exercise"
+      );
+    });
+
+    it("should return 404 if the exercise does not exist", async () => {
+      const exerciseId = 1;
+
+      mockExercisesService.getExerciseById.mockResolvedValue(null);
+
+      const response = await request(app).delete(`/exercises/${exerciseId}`);
+      expect(response.status).toBe(404);
+      expect(response.body.message).toBe("Exercise not found");
+    });
   });
 });
