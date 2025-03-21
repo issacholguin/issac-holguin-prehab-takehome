@@ -43,7 +43,7 @@ export const updateExercisePermissionGuard = (
 
       // Early return if user is the owner - owners can always modify their exercises
       if (isOwner) {
-        next();
+        next("User is the owner");
         return;
       }
 
@@ -56,17 +56,20 @@ export const updateExercisePermissionGuard = (
       // Public exercise permissions
       if (isPublicExercise && !rules.anyoneCanModifyPublicExercises) {
         throw new AppError(
-          "Only the owner can modify this public exercise",
+          "Public exercises are not allowed to be modified",
           403
         );
       }
 
       // Private exercise permissions - non-owners can never modify private exercises
-      if (!isPublicExercise) {
-        throw new AppError("Only the owner can modify private exercises", 403);
+      if (!isPublicExercise && rules.anyoneCanModifyPublicExercises) {
+        throw new AppError(
+          "Only the owner can modify their own non-public exercises",
+          403
+        );
       }
 
-      next();
+      next("All checks passed, user is allowed to modify exercise");
     } catch (error) {
       if (error instanceof AppError) {
         next(error);
