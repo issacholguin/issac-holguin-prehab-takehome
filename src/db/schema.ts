@@ -1,6 +1,10 @@
 import { sqliteTable as table, index } from "drizzle-orm/sqlite-core";
 import * as t from "drizzle-orm/sqlite-core";
-import { createSelectSchema, createInsertSchema } from "drizzle-zod";
+import {
+  createSelectSchema,
+  createInsertSchema,
+  createUpdateSchema,
+} from "drizzle-zod";
 import { z } from "zod";
 
 export const users = table(
@@ -109,7 +113,13 @@ export const exercisesInsertSchema = createInsertSchema(exercises, {
     .union([z.boolean(), z.number().min(0).max(1)])
     .transform((val) => (val === true || val === 1 ? 1 : 0)),
 });
-
+export const exercisesUpdateSchema = exercisesInsertSchema
+  .pick({
+    name: true,
+    description: true,
+    difficulty: true,
+  })
+  .partial();
 export type ExerciseInsert = Omit<z.infer<typeof exercisesInsertSchema>, "id">;
 export type ExerciseUpdate = Partial<ExerciseInsert>;
 export type Exercise = z.infer<typeof exercisesSelectSchema>;

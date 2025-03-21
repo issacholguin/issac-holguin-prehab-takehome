@@ -76,7 +76,9 @@ i. Name
  iii. Difficulty level on a scale of 1-5  
  iv. Is public (boolean)  
  b. Modify an exercise’s name, description, and/or difficulty level  
- c. Delete an exercise
+ a public exercise can be modified by an authneticated user
+b a non public exercise can only be modified by the user who created it
+c. Delete an exercise
 
 ## 3. All users can:
 
