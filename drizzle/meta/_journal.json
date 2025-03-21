@@ -15,6 +15,20 @@
       "when": 1742414910784,
       "tag": "0001_flowery_screwball",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1742512949373,
+      "tag": "0002_happy_gorgon",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1742513356779,
+      "tag": "0003_little_mandarin",
+      "breakpoints": true
     }
   ]
 }
