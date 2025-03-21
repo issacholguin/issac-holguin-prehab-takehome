@@ -35,6 +35,10 @@ Auth Routes:
 /auth/register
 curl -X POST http://localhost:3000/auth/register -H "Content-Type: application/json" -d '{"username": "test", "password": "test"}'
 
+curl -X POST http://localhost:3000/exercises \
+-H "Content-Type: application/json" \
+-d '{"name": "Pushups", "description": "Pushups are a great exercise for the chest", "difficulty": 1, "isPublic": 1}'
+
 improvements:
 
 setup assumes we want an access + refresh token pair (vs doing some verification of the user/email) but since we only have one field username, it was safe to assume we'd be logged in.
@@ -59,7 +63,9 @@ i. Username
  ii. Password
 
 DONE , /auth/login
-b. Authenticate a user  
+b. Authenticate a user
+
+DONE , /auth/refresh-token
 c. Refresh an access token
 
 ## 2. An authenticated user can:

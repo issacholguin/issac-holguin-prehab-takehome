@@ -17,6 +17,16 @@ jest.mock("../../service/users.service", () => ({
 
 const mockUsersService = usersService as jest.Mocked<typeof usersService>;
 
+let server: any;
+
+beforeAll(() => {
+  server = app.listen(0); // Using port 0 lets the OS assign a random available port
+});
+
+afterAll((done) => {
+  server.close(done);
+});
+
 describe("Auth Routes", () => {
   beforeEach(() => {
     jest.resetAllMocks();
