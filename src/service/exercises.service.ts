@@ -12,7 +12,7 @@ export const createExercise = async (
   exercise: ExerciseInsert
 ): Promise<Exercise> => {
   try {
-    const query = db.insert(exercises).values(exercise).returning();
+    const query = db().insert(exercises).values(exercise).returning();
     const [result] = await query;
     return { ...result, isPublic: Boolean(result.isPublic) };
   } catch (error) {
@@ -22,7 +22,7 @@ export const createExercise = async (
 
 export const getExerciseById = async (id: number): Promise<Exercise | null> => {
   try {
-    const query = db.select().from(exercises).where(eq(exercises.id, id));
+    const query = db().select().from(exercises).where(eq(exercises.id, id));
     const [result] = await query;
     if (result) {
       return { ...result, isPublic: Boolean(result.isPublic) };
@@ -38,7 +38,7 @@ export const modifyExercise = async (
   exercise: ExerciseUpdate
 ): Promise<Exercise> => {
   try {
-    const query = db
+    const query = db()
       .update(exercises)
       .set(exercise)
       .where(eq(exercises.id, parseInt(id)))
@@ -54,7 +54,7 @@ export const deleteExercise = async (
   id: number
 ): Promise<{ message: string; id: number }> => {
   try {
-    const query = db.delete(exercises).where(eq(exercises.id, id));
+    const query = db().delete(exercises).where(eq(exercises.id, id));
     await query;
     return {
       message: "Exercise deleted successfully",
@@ -106,7 +106,7 @@ export const listExercises = async (
     }
 
     // Build query combining base condition with filter conditions
-    let query = db
+    let query = db()
       .select()
       .from(exercises)
       .where(
