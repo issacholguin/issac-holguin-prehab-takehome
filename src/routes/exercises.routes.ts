@@ -3,16 +3,95 @@ import {
   createExercise,
   deleteExercise,
   getExerciseById,
+  listExercises,
   modifyExercise,
 } from "../service/exercises.service";
 import { AppError } from "../types/express/error";
-import { authenticateToken } from "../middleware/auth.middleware";
+import {
+  authenticateToken,
+  optionalAuthenticateToken,
+} from "../middleware/auth.middleware";
 import { validateSchema } from "../middleware/validate-schema.middleware";
 import { exercisesInsertSchema, exercisesUpdateSchema } from "../db/schema";
 import { updateExercisePermissionGuard } from "../middleware/permission.middleware";
 
 const router = Router();
 
+/**
+ * @route GET /exercises
+ * @desc List all public exercises with optional filtering and sorting
+ * @access Public (with optional authentication)
+ */
+const listExercisesHandler: RequestHandler = async (req, res, next) => {
+  try {
+    const { name, description, difficulty, sortBy, sortOrder } = req.query;
+    const userId = req.user?.userId;
+
+    const exercises = await listExercises({
+      name: name as string,
+      description: description as string,
+      difficulty: difficulty ? Number(difficulty) : undefined,
+      userId,
+      sortBy: sortBy === "difficulty" ? "difficulty" : undefined,
+      sortOrder: sortOrder === "desc" ? "desc" : "asc",
+    });
+
+    res.status(200).json({
+      exercises,
+    });
+  } catch (error) {
+    if (error instanceof AppError) {
+      next({
+        status: error.status,
+        message: error.message,
+      });
+      return;
+    }
+    next(error);
+  }
+};
+
+/**
+ * @route GET /exercises/:id
+ * @desc Get a specific exercise
+ * @access Public for public exercises, Private for private exercises (with optional authentication)
+ */
+const getExerciseHandler: RequestHandler = async (req, res, next) => {
+  try {
+    const exercise = await getExerciseById(Number(req.params.id));
+
+    if (!exercise) {
+      throw new AppError("Exercise not found", 404);
+    }
+
+    // Check if exercise is private and user is not the owner
+    if (!exercise.isPublic && exercise.userId !== req.user?.userId) {
+      throw new AppError(
+        "You don't have permission to view this exercise",
+        403
+      );
+    }
+
+    res.status(200).json({
+      exercise,
+    });
+  } catch (error) {
+    if (error instanceof AppError) {
+      next({
+        status: error.status,
+        message: error.message,
+      });
+      return;
+    }
+    next(error);
+  }
+};
+
+// Public routes (with optional authentication)
+router.get("/", optionalAuthenticateToken, listExercisesHandler);
+router.get("/:id", optionalAuthenticateToken, getExerciseHandler);
+
+// Protected routes (auth required)
 router.use(authenticateToken);
 /**
  * @route POST /exercises
@@ -116,4 +195,5 @@ const deleteExerciseHandler: RequestHandler = async (req, res, next) => {
   }
 };
 router.delete("/:id", deleteExerciseHandler);
+
 export default router;
