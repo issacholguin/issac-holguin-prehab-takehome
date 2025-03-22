@@ -118,45 +118,85 @@ describe("Exercises Integration Tests", () => {
   });
 
   describe("GET /exercises", () => {
-    it("should list all public exercises without filters", async () => {
-      const response = await request(app).get("/exercises");
+    describe("Without authentication", () => {
+      it("should list all public exercises without filters", async () => {
+        const response = await request(app).get("/exercises");
 
-      expect(response.status).toBe(200);
-      expect(response.body.exercises).toHaveLength(3); // Only public exercises
-      expect(response.body.exercises.map((e: any) => e.id)).toEqual([1, 2, 4]);
+        expect(response.status).toBe(200);
+        expect(response.body.exercises).toHaveLength(3); // Only public exercises
+        expect(response.body.exercises.map((e: any) => e.id)).toEqual([
+          1, 2, 4,
+        ]);
+      });
+
+      it("should filter exercises by name", async () => {
+        const response = await request(app).get("/exercises?name=push");
+
+        expect(response.status).toBe(200);
+        expect(response.body.exercises).toHaveLength(2);
+        expect(response.body.exercises.map((e: any) => e.name)).toEqual([
+          "Push-ups",
+          "Advanced Push-ups",
+        ]);
+      });
+
+      it("should filter exercises by difficulty", async () => {
+        const response = await request(app).get("/exercises?difficulty=2");
+
+        expect(response.status).toBe(200);
+        expect(response.body.exercises).toHaveLength(2);
+        expect(response.body.exercises.map((e: any) => e.difficulty)).toEqual([
+          2, 2,
+        ]);
+      });
+
+      it("should filter excercise by description", async () => {
+        const response = await request(app).get("/exercises?description=body");
+
+        expect(response.status).toBe(200);
+        expect(response.body.exercises).toHaveLength(2);
+        expect(response.body.exercises.some((e: any) => e.name === "Push-ups"));
+        expect(response.body.exercises.some((e: any) => e.name === "Squats"));
+      });
+
+      it("should sort exercises by difficulty", async () => {
+        const response = await request(app).get(
+          "/exercises?sortBy=difficulty&sortOrder=desc"
+        );
+
+        expect(response.status).toBe(200);
+        const difficulties = response.body.exercises.map(
+          (e: any) => e.difficulty
+        );
+        expect(difficulties).toEqual([4, 2, 2]); // Should be in descending order
+
+        const responseAsc = await request(app).get(
+          "/exercises?sortBy=difficulty&sortOrder=asc"
+        );
+        const difficultiesAsc = responseAsc.body.exercises.map(
+          (e: any) => e.difficulty
+        );
+        expect(difficultiesAsc).toEqual([2, 2, 4]); // Should be in ascending order
+      });
     });
 
-    it("should filter exercises by name", async () => {
-      const response = await request(app).get("/exercises?name=push");
+    describe("With authentication", () => {
+      it("should include private exercises by the authenticated user when user is authenticated", async () => {
+        // override mock to include user 2 as authenticated user
+        mockAuthMiddleware.optionalAuthenticateToken.mockImplementation(
+          (req, res, next) => {
+            req.user = {
+              userId: 2,
+              username: "testuser2",
+            };
+            next();
+          }
+        );
 
-      expect(response.status).toBe(200);
-      expect(response.body.exercises).toHaveLength(2);
-      expect(response.body.exercises.map((e: any) => e.name)).toEqual([
-        "Push-ups",
-        "Advanced Push-ups",
-      ]);
-    });
-
-    it("should filter exercises by difficulty", async () => {
-      const response = await request(app).get("/exercises?difficulty=2");
-
-      expect(response.status).toBe(200);
-      expect(response.body.exercises).toHaveLength(2);
-      expect(response.body.exercises.map((e: any) => e.difficulty)).toEqual([
-        2, 2,
-      ]);
-    });
-
-    it("should sort exercises by difficulty", async () => {
-      const response = await request(app).get(
-        "/exercises?sortBy=difficulty&sortOrder=desc"
-      );
-
-      expect(response.status).toBe(200);
-      const difficulties = response.body.exercises.map(
-        (e: any) => e.difficulty
-      );
-      expect(difficulties).toEqual([4, 2, 2]); // Should be in descending order
+        const response = await request(app).get("/exercises");
+        expect(response.status).toBe(200);
+        expect(response.body.exercises).toHaveLength(4); // Should see all public exercises + user 2's private exercise
+      });
     });
 
     // it("should show private exercises when user is authenticated", async () => {
