@@ -6,6 +6,13 @@ import request from "supertest";
 import path from "path";
 import * as schema from "../../db/schema";
 import { initializeDatabase } from "../../config/database";
+import * as authMiddleware from "../../middleware/auth.middleware";
+
+jest.mock("../../middleware/auth.middleware", () => ({
+  authenticateToken: jest.fn(),
+  optionalAuthenticateToken: jest.fn(),
+}));
+const mockAuthMiddleware = authMiddleware as jest.Mocked<typeof authMiddleware>;
 
 describe("Exercises Integration Tests", () => {
   let testDb: ReturnType<typeof drizzle>;
@@ -101,6 +108,13 @@ describe("Exercises Integration Tests", () => {
     for (const exercise of testData) {
       await testDb.insert(schema.exercises).values(exercise);
     }
+
+    mockAuthMiddleware.optionalAuthenticateToken.mockImplementation(
+      (req, res, next) => {
+        // No user by default, just go next
+        next();
+      }
+    );
   });
 
   describe("GET /exercises", () => {
@@ -112,45 +126,64 @@ describe("Exercises Integration Tests", () => {
       expect(response.body.exercises.map((e: any) => e.id)).toEqual([1, 2, 4]);
     });
 
-    // it("should filter exercises by name", async () => {
-    //   const response = await request(app).get("/exercises?name=push");
+    it("should filter exercises by name", async () => {
+      const response = await request(app).get("/exercises?name=push");
 
-    //   expect(response.status).toBe(200);
-    //   expect(response.body.exercises).toHaveLength(2);
-    //   expect(response.body.exercises.map((e: any) => e.name)).toEqual([
-    //     "Push-ups",
-    //     "Advanced Push-ups",
-    //   ]);
-    // });
+      expect(response.status).toBe(200);
+      expect(response.body.exercises).toHaveLength(2);
+      expect(response.body.exercises.map((e: any) => e.name)).toEqual([
+        "Push-ups",
+        "Advanced Push-ups",
+      ]);
+    });
 
-    // it("should filter exercises by difficulty", async () => {
-    //   const response = await request(app).get("/exercises?difficulty=2");
+    it("should filter exercises by difficulty", async () => {
+      const response = await request(app).get("/exercises?difficulty=2");
 
-    //   expect(response.status).toBe(200);
-    //   expect(response.body.exercises).toHaveLength(2);
-    //   expect(response.body.exercises.map((e: any) => e.difficulty)).toEqual([
-    //     2, 2,
-    //   ]);
-    // });
+      expect(response.status).toBe(200);
+      expect(response.body.exercises).toHaveLength(2);
+      expect(response.body.exercises.map((e: any) => e.difficulty)).toEqual([
+        2, 2,
+      ]);
+    });
 
-    // it("should sort exercises by difficulty", async () => {
-    //   const response = await request(app).get(
-    //     "/exercises?sortBy=difficulty&sortOrder=desc"
-    //   );
+    it("should sort exercises by difficulty", async () => {
+      const response = await request(app).get(
+        "/exercises?sortBy=difficulty&sortOrder=desc"
+      );
 
-    //   expect(response.status).toBe(200);
-    //   const difficulties = response.body.exercises.map(
-    //     (e: any) => e.difficulty
-    //   );
-    //   expect(difficulties).toEqual([4, 2, 2]); // Should be in descending order
-    // });
+      expect(response.status).toBe(200);
+      const difficulties = response.body.exercises.map(
+        (e: any) => e.difficulty
+      );
+      expect(difficulties).toEqual([4, 2, 2]); // Should be in descending order
+    });
 
     // it("should show private exercises when user is authenticated", async () => {
-    //   // First, let's authenticate as user 2
+    //   const userResponse = await request(app).post("/auth/register").send({
+    //     username: "testCreatePrivateExercise",
+    //     password: "password2",
+    //   });
+
+    //   expect(userResponse.status).toBe(201);
+
+    //   const createPrivateExerciseResponse = await request(app)
+    //     .post("/exercises")
+    //     .set("Authorization", `${userResponse.body.token}`)
+    //     .send({
+    //       name: "Private Exercise",
+    //       description: "This is a private exercise",
+    //       difficulty: 1,
+    //       isPublic: 0,
+    //     });
+
+    //   if (createPrivateExerciseResponse.status !== 201) {
+    //     throw new Error("Failed to create private exercise");
+    //   }
+
     //   const response = await request(app)
     //     .get("/exercises")
-    //     .set("Authorization", "Bearer user2-token") // Assuming your auth middleware can handle this token
-    //     .query({ userId: 2 });
+    //     .set("Authorization", `${userResponse.body.token}`);
 
     //   expect(response.status).toBe(200);
     //   expect(response.body.exercises).toHaveLength(4); // Should see all public exercises + user 2's private exercise
