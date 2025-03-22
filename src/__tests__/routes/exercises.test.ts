@@ -370,4 +370,105 @@ describe("Exercise Routes", () => {
       expect(response.body.message).toBe("Exercise not found");
     });
   });
+
+  describe("GET /exercises/:id", () => {
+    const mockUser = {
+      userId: 1,
+      username: "testuser",
+    };
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      // bypass auth middleware
+      mockAuthMiddleware.optionalAuthenticateToken.mockImplementation(
+        (req, res, next) => {
+          // default to no user
+          next();
+        }
+      );
+    });
+    it("should return a public exercise successfully", async () => {
+      const exerciseId = 1;
+
+      mockExercisesService.getExerciseById.mockResolvedValue({
+        id: exerciseId,
+        name: "Test Exercise",
+        description: "Test Description",
+        difficulty: 1,
+        isPublic: true,
+        userId: mockUser.userId,
+      });
+
+      const response = await request(app).get(`/exercises/${exerciseId}`);
+      expect(response.status).toBe(200);
+      expect(response.body.exercise).toEqual({
+        id: exerciseId,
+        name: "Test Exercise",
+        description: "Test Description",
+        difficulty: 1,
+        isPublic: true,
+        userId: mockUser.userId,
+      });
+    });
+
+    it("should return 404 if the exercise does not exist", async () => {
+      const exerciseId = 1;
+
+      mockExercisesService.getExerciseById.mockResolvedValue(null);
+
+      const response = await request(app).get(`/exercises/${exerciseId}`);
+      expect(response.status).toBe(404);
+      expect(response.body.message).toBe("Exercise not found");
+    });
+
+    it("should return 403 if the exercise is private and the user is not the owner", async () => {
+      const exerciseId = 1;
+
+      mockExercisesService.getExerciseById.mockResolvedValue({
+        id: exerciseId,
+        name: "Test Exercise",
+        description: "Test Description",
+        difficulty: 1,
+        isPublic: false,
+        userId: 2, // Different user ID than the authenticated user
+      });
+
+      const response = await request(app).get(`/exercises/${exerciseId}`);
+      expect(response.status).toBe(403);
+      expect(response.body.message).toBe(
+        "You don't have permission to view this exercise"
+      );
+    });
+
+    it("should return a non-public exercise if the user is the owner", async () => {
+      const exerciseId = 1;
+
+      mockExercisesService.getExerciseById.mockResolvedValue({
+        id: exerciseId,
+        name: "Test Exercise",
+        description: "Test Description",
+        difficulty: 1,
+        isPublic: false,
+        userId: mockUser.userId,
+      });
+      // add user as authenticated user
+      mockAuthMiddleware.optionalAuthenticateToken.mockImplementation(
+        (req, res, next) => {
+          req.user = mockUser;
+          next();
+        }
+      );
+
+      const response = await request(app).get(`/exercises/${exerciseId}`);
+      expect(response.status).toBe(200);
+      expect(response.body.exercise).toEqual({
+        id: exerciseId,
+        name: "Test Exercise",
+        description: "Test Description",
+        difficulty: 1,
+        isPublic: false,
+        userId: mockUser.userId,
+      });
+    });
+  });
 });
