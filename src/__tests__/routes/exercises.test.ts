@@ -12,10 +12,12 @@ jest.mock("../../service/exercises.service", () => ({
   modifyExercise: jest.fn(),
   deleteExercise: jest.fn(),
   getExerciseById: jest.fn(),
+  listExercises: jest.fn(),
 }));
 
 jest.mock("../../middleware/auth.middleware", () => ({
   authenticateToken: jest.fn(),
+  optionalAuthenticateToken: jest.fn(),
 }));
 
 jest.mock("../../middleware/permission.middleware", () => ({

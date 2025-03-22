@@ -50,6 +50,7 @@ const listExercisesHandler: RequestHandler = async (req, res, next) => {
     next(error);
   }
 };
+router.get("/", optionalAuthenticateToken, listExercisesHandler);
 
 /**
  * @route GET /exercises/:id
@@ -86,9 +87,6 @@ const getExerciseHandler: RequestHandler = async (req, res, next) => {
     next(error);
   }
 };
-
-// Public routes (with optional authentication)
-router.get("/", optionalAuthenticateToken, listExercisesHandler);
 router.get("/:id", optionalAuthenticateToken, getExerciseHandler);
 
 // Protected routes (auth required)
