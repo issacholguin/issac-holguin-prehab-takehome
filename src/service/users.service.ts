@@ -10,7 +10,7 @@ export const createUser = async (
   try {
     const hashedPassword = await hashPassword(user.password);
     user.password = hashedPassword;
-    const query = db.insert(users).values(user).returning();
+    const query = db().insert(users).values(user).returning();
     const createdUser = await query;
     const { password, ...userWithoutPassword } = createdUser[0];
     return userWithoutPassword;
@@ -21,7 +21,7 @@ export const createUser = async (
 
 export const getUserByUsername = async (username: string) => {
   try {
-    const query = db
+    const query = db()
       .select()
       .from(users)
       .where(eq(users.username, username))
@@ -35,7 +35,7 @@ export const getUserByUsername = async (username: string) => {
 
 export const getUserById = async (id: number): Promise<User> => {
   try {
-    const query = db.select().from(users).where(eq(users.id, id));
+    const query = db().select().from(users).where(eq(users.id, id));
     const [user] = await query;
     return user;
   } catch (error) {
