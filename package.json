@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "app.js",
   "scripts": {
+    "db:init:local": "mkdir -p data && [ -f data/database.sqlite ] || (touch data/database.sqlite && npm run db:migrate:local)",
     "db:migrate:local": "npx drizzle-kit migrate --config drizzle-dev.config.ts",
     "db:migrate:prod": "npx drizzle-kit migrate --config drizzle-prod.config.ts",
     "db:generate:local": "npx drizzle-kit --config drizzle-dev.config.ts generate",

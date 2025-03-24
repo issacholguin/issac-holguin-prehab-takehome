@@ -20,6 +20,6 @@
     }
   },
   "forwardPorts": [3000],
-  "postCreateCommand": "npm install",
+  "postCreateCommand": "npm install && npm run db:init:local && ./setup-env.sh",
   "remoteUser": "node"
-} 
+}
