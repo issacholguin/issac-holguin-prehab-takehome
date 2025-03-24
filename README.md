@@ -91,6 +91,52 @@ This creates a production container and runs it, mapping port 3000 on the host t
 │   └── app.ts               # Main application entry point
 ```
 
+
+## Database Schema
+
+The schema file combines DrizzleORM and Zod to create a robust, type-safe database schema with built-in validation. 
+
+### Database Tables
+
+There are two main tables in the system:
+
+**Users Table**
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | integer | Primary Key, Auto Increment |
+| username | text | Not Null, Unique |
+| password | text | Not Null |
+
+**Exercises Table**
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | integer | Primary Key, Auto Increment |
+| name | text | Not Null |
+| description | text | Not Null |
+| difficulty | integer | Not Null |
+| isPublic | integer | Not Null |
+| userId | integer | Foreign Key → users.id |
+
+### Schema Validation
+
+The implementation uses a two-layer validation approach:
+
+1. **DrizzleORM Layer**
+   * Handles database schema definition
+   * Manages relationships between tables
+   * Creates database indexes for performance
+   * Provides type safety at the database level
+
+2. **Zod Validation Layer**
+   * Validates user input before it reaches the database
+   * Enforces business rules like:
+     * Username length (3-20 characters)
+     * Password length (6-100 characters)
+     * Exercise name length (1-100 characters)
+     * Exercise description length (1-1000 characters)
+     * Difficulty range (1-5)
+     * Handles data transformations (like boolean to integer for SQLite)
+
 ## Database Migrations
 
 This section covers how DB migrations work. DrizzleORM is used to create and apply migrations based off of the schema in `src/db/schema.ts`.
@@ -113,6 +159,8 @@ The difference is in the configuration files:
 
 - `drizzle.config.ts` for local development
 - `drizzle.config.prod.ts` for production
+
+
 
 ## Performance Optimizations
 
