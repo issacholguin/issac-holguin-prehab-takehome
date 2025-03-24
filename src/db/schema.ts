@@ -7,6 +7,10 @@ import {
 } from "drizzle-zod";
 import { z } from "zod";
 
+/**
+ * User schema
+ */
+
 export const users = table(
   "users",
   {
@@ -47,30 +51,9 @@ export type UserLogin = z.infer<typeof usersLoginSchema>;
 export type User = z.infer<typeof usersSelectSchema>;
 export type UserWithoutPassword = Omit<User, "password">;
 
-// a. Create a new exercise with the following properties:
-// i. Name
-//  ii. Description
-//  iii. Difficulty level on a scale of 1-5
-//  iv. Is public (boolean)
-//  b. Modify an exercise's name, description, and/or difficulty level
-//  c. Delete an exercise
-
-/*
-All users can:
-
-a. Retrieve a list of all public exercises  
- i. Can be sorted by the following:
-
-1.  Difficulty level  
-    ii. Can be searched/filtered by the following fields:
-1.  Name
-1.  Description
-1.  Difficulty level  
-    iii. Include non-public exercises that were created by the user sending the request  
-    b. Retrieve a specific exercise  
-    i. Not public exercises cannot be retrieved unless the user sending the request is the creator of the exercise being requested
-
-*/
+/**
+ * Exercise schema
+ */
 
 export const exercises = table(
   "exercises",
@@ -84,10 +67,14 @@ export const exercises = table(
     userId: t.int("userId").references(() => users.id),
   },
   (t) => [
-    // Since we are searching/filtering by name, difficulty, and description, we can create indexes on these columns
-    index("name_idx").on(t.name),
+    // Primary index combination for the most common filter pattern
+    index("isPublic_userId_idx").on(t.isPublic, t.userId),
+
+    // For filtering + sorting combinations
+    index("isPublic_difficulty_idx").on(t.isPublic, t.difficulty),
+
+    // Single column index for direct difficulty lookups and sorts
     index("difficulty_idx").on(t.difficulty),
-    index("description_idx").on(t.description),
   ]
 );
 
