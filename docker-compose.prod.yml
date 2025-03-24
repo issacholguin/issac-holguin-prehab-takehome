@@ -1,0 +1,23 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+      args:
+        - NODE_ENV=production
+    image: prehab-takehome-prod
+    container_name: prehab-takehome-prod
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - JWT_SECRET=${JWT_SECRET:-your-secret-key}
+    volumes:
+      - app-data:/app/dist/data
+
+volumes:
+  app-data:
+    driver: local

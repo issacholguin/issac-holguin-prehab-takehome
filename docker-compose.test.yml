@@ -1,0 +1,22 @@
+version: "3.8"
+
+services:
+  test:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    volumes:
+      - .:/workspace
+    environment:
+      - NODE_ENV=test
+      - JWT_SECRET=your-secret-key
+    user: node
+    command: >
+      sh -c "
+        mkdir -p node_modules &&
+        npm ci &&
+        npm test"
+
+volumes:
+  node_modules:
+    driver: local
