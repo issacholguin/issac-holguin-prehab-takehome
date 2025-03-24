@@ -1,132 +1,228 @@
-Versions:
-Node: 18.20.5
-NPM: 10.8.2
+# Prehab Take Home REST API - Issac Holguin
 
-To run the project:
+Hey team, here is my project!
+
+This README is a summary of the project with instructions and explainations of the project.
+
+## Environment
+
+- **Node:** 18.20.5
+- **NPM:** 10.8.2
+
+## Tech Stack
+
+- **Express.js** - API server framework
+- **SQLite** - Database
+- **DrizzleORM** - Database ORM and migrations
+- **ZOD** - Schema and input validation
+- **Jest** - Testing framework
+- **Supertest** - API testing utility
+
+## Getting Started
+
+### Setup
 
 1. Clone the repository
 2. Run `npm install`
-3. Run `npm run dev`
+3. Run `npm run db:init:local` (this initializes local sqlite db with migrations)
+4. Set up environment variables:
+   ```bash
+   ./setup-env.sh
+   ```
+   This creates:
+   - `.env.local` for development
+   - `.env.test` for testing
+   - Adds default JWT_SECRET to both files (you can modify these later)
+5. Run `npm run dev`
 
-to transpile the TS to JS and run the project:
-
-1. Run `npm install`
-2. Run `npm run build`
-3. Run `npm run start`
-
-OR if you want to run the dev container:
+### Development Container (VSCode) (preferred way to avoid dependency issues + OS differences)
 
 1. Clone the repository
-2. Ensure devcontainers is installed in VSCode as an extension
+2. Ensure the "Dev Containers" extension is installed in VSCode
 3. Open the repository in VSCode
-4. Run `Dev Containers: Reopen in Container`
-5. Once the container is running in the /workspaces/issac-holguin-prehab-takehome directory, refer to top of README for instructions on running or building the project
+4. Run `Dev Containers: Reopen in Container` command. this will automatically set up the entire dev environment in a container, installation dependencies, run migrations, etc.
+5. Once the container is running in the `/workspaces/issac-holguin-prehab-takehome` directory, open a new terminal and run the following command:
+   ```bash
+   npm run dev
+   ```
 
-Instructions for setting up the environment:
+Project should be running on `http://localhost:3000`
 
-1. Run `./setup-env.sh`
-   this will create
-   .env.local for development
-   .env.test for testing
-   and add the JWT_SECRET to both files
+## Running Tests
 
-instructions for running tests:
+Tests are implemented using Jest and Supertest:
 
-1. Run `docker compose -f docker-compose.test.yml up --build`
+- Unit tests for routes and middleware
+- Integration tests for the exercise search functionality (GET /exercises) that validate the service layer
 
+Since the project uses SQLite, an in-memory database is used for testing to improve speed and isolation.
+
+To run tests:
+
+```bash
+docker compose -f docker-compose.test.yml up --build
+```
+
+This will start the test container and run the tests.
+
+## Production Deployment
+
+To build and run a production container:
+
+```bash
 docker compose -f docker-compose.prod.yml up -d --build
+```
 
-Curls for testing:
-Auth Routes:
-/auth/register
-curl -X POST http://localhost:3000/auth/register -H "Content-Type: application/json" -d '{"username": "test", "password": "test"}'
+This creates a production container and runs it, mapping port 3000 on the host to port 3000 in the container.
 
-curl -X POST http://localhost:3000/exercises \
--H "Content-Type: application/json" \
--d '{"name": "Pushups", "description": "Pushups are a great exercise for the chest", "difficulty": 1, "isPublic": 1}'
+## Project Structure
 
-improvements:
+```
+├── drizzle/                  # Database migrations
+├── src/
+│   ├── __tests__/           # Unit and integration tests
+│   ├── config/              # Configuration (DB, logger)
+│   ├── db/                  # Database schemas and setup
+│   ├── middleware/          # Auth, permissions, validation, logging
+│   ├── routes/              # API routes
+│   ├── services/            # Service layer for database interactions
+│   ├── types/               # Type definitions (e.g., AppError)
+│   ├── utils/               # Utilities (JWT, bcrypt)
+│   └── app.ts               # Main application entry point
+```
 
-setup assumes we want an access + refresh token pair (vs doing some verification of the user/email) but since we only have one field username, it was safe to assume we'd be logged in.
+## Database Migrations
 
-in a real world setting i would opt to dynamically load secrets from a vault like AWS Secrets Manager , but for now we are just using environment variables..
+This section covers how DB migrations work. DrizzleORM is used to create and apply migrations based off of the schema in `src/db/schema.ts`.
 
-i would also add a lot more tests, ideally integration tests for the auth and user
+### Local Development
 
-constants around the messages we send to the client
+```bash
+npm run db:generate:local
+npm run db:migrate:local
+```
 
----
+### Production
 
-# Prompt:
+```bash
+npm run db:generate:prod
+npm run db:migrate:prod
+```
 
-Build a RESTful API with endpoints that can handle the following requests.
+The difference is in the configuration files:
 
-## 1. Using JWT-based authentication:
+- `drizzle.config.ts` for local development
+- `drizzle.config.prod.ts` for production
 
-DONE , /auth/register
-a. Create user with the following fields
-i. Username  
- ii. Password
+## Performance Optimizations
 
-DONE , /auth/login
-b. Authenticate a user
+DrizzleORM enables easy creation of multi-column indexes for improved query performance. The following indexes have been implemented:
 
-DONE , /auth/refresh-token
-c. Refresh an access token
+```typescript
+// Primary index combination for the most common filter pattern
+index("isPublic_userId_idx").on(t.isPublic, t.userId),
 
-## 2. An authenticated user can:
+// For filtering + sorting combinations
+index("isPublic_difficulty_idx").on(t.isPublic, t.difficulty),
 
-a. Create a new exercise with the following properties:
-i. Name  
- ii. Description  
- iii. Difficulty level on a scale of 1-5  
- iv. Is public (boolean)  
- b. Modify an exercise’s name, description, and/or difficulty level  
- a public exercise can be modified by an authneticated user
-b a non public exercise can only be modified by the user who created it
-c. Delete an exercise
+// Single column index for direct difficulty lookups and sorts
+index("difficulty_idx").on(t.difficulty),
+```
 
-## 3. All users can:
+These indexes optimize the most common query patterns for the exercises table.
 
-a. Retrieve a list of all public exercises  
- i. Can be sorted by the following:
+## API Documentation
 
-1.  Difficulty level  
-    ii. Can be searched/filtered by the following fields:
-1.  Name
-1.  Description
-1.  Difficulty level  
-    iii. Include non-public exercises that were created by the user sending the request  
-    b. Retrieve a specific exercise  
-    i. Not public exercises cannot be retrieved unless the user sending the request is the creator of the exercise being requested
+Here are all the routes:
 
-## Bonus points:
+- POST /users/register
+- POST /users/login
+- POST /users/refresh-token
 
-1. An authenticated user can  
-   a. “Favorite” and “Un-favorite” an exercise  
-   b. “Save” and “Un-save” an exercise  
-   c. “Rate” an exercise from 1-5  
-   d. Retrieve a combined list of the user’s own favorite and saved exercises  
-    i. Include a property with each record returned indicating whether the user “saved” and/or “favorited” that specific exercise
+- GET /exercises
+- GET /exercises/:id
+- POST /exercises
+- PATCH /exercises/:id
+- DELETE /exercises/:id
 
-2. When retrieving a list of all public exercises (see 2a in Prompt above)  
-   a. Also include a count of “saves” or “favorites” for each exercise record returned
+### Authentication Endpoints
 
-3. Retrieve a specific exercise  
-   a. Include the following fields:  
-    i. Name  
-    ii. Description  
-    iii. Difficulty level  
-    iv. Count of favorites  
-    v. Count of saves  
-   b. Not public exercises cannot be retrieved unless the user sending the request is the creator of the exercise being requested
+#### POST /users/register
 
-4. Retrieve a list of users that have saved or favorited a specific exercise
+- **Input**: `{ username: string, password: string }`
+- **Requirements**:
+  - Username: 3-20 characters
+  - Password: 6-100 characters
+- **Auth**: No auth required
+- **Returns**: User object, access token, and refresh token
 
-5. Include unit tests
+#### POST /users/login
 
-6. Include API docs
+- **Input**: `{ username: string, password: string }`
+- **Auth**: No auth required
+- **Returns**: User object, access token, and refresh token
 
-7. Include a way to execute database/schema migrations
+#### POST /users/refresh-token
 
-8. Create a multi-column database index of your choice
+- **Input**: `{ refreshToken: string }`
+- **Auth**: No auth required
+- **Returns**: New access token and refresh token
+
+### Exercise Endpoints
+
+#### GET /exercises
+
+- **Query params**:
+  - `name`: Filter by name (optional)
+  - `description`: Filter by description (optional)
+  - `difficulty`: Filter by difficulty 1-5 (optional)
+  - `sortBy`: "difficulty" (optional)
+  - `sortOrder`: "asc" or "desc" (optional)
+- **Auth**: Optional (shows private exercises owned by user if authenticated)
+- **Returns**: List of exercises
+
+#### GET /exercises/:id
+
+- **Path params**: `id` (exercise ID)
+- **Auth**: Optional (required for private exercises)
+- **Returns**: Single exercise object
+- **Note**: Private exercises only visible to owner
+
+#### POST /exercises
+
+- **Input**:
+  ```typescript
+  {
+    name: string,        // 1-100 chars
+    description: string, // 1-1000 chars
+    difficulty: number,  // 1-5
+    isPublic: boolean
+  }
+  ```
+- **Auth**: Required
+- **Returns**: Created exercise object
+
+#### PATCH /exercises/:id
+
+- **Path params**: `id` (exercise ID)
+- **Input**: Partial update of:
+  ```typescript
+  {
+    name?: string,       // 1-100 chars
+    description?: string,// 1-1000 chars
+    difficulty?: number  // 1-5
+  }
+  ```
+- **Auth**: Required
+- **Permission rules**:
+  - Owners can modify their own exercises
+  - Any authenticated user can modify public exercises
+  - Private exercises can only be modified by owner
+
+#### DELETE /exercises/:id
+
+- **Path params**: `id` (exercise ID)
+- **Auth**: Required
+- **Permission rules**:
+  - Only the owner can delete their exercises
+- **Returns**: Success message with deleted exercise ID
