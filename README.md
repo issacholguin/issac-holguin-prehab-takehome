@@ -30,6 +30,12 @@ Instructions for setting up the environment:
    .env.test for testing
    and add the JWT_SECRET to both files
 
+instructions for running tests:
+
+1. Run `docker compose -f docker-compose.test.yml up --build`
+
+docker compose -f docker-compose.prod.yml up -d --build
+
 Curls for testing:
 Auth Routes:
 /auth/register
