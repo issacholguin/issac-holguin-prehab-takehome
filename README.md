@@ -41,7 +41,7 @@ Also having fun with dev containers.
 2. Ensure the "Dev Containers" extension is installed in VSCode
 3. Open the repository in VSCode
 4. Run `Dev Containers: Reopen in Container` command. this will automatically set up the entire dev environment in a container, installation dependencies, run migrations, etc.
-5. Once the container is running in the `/workspaces/issac-holguin-prehab-takehome` directory, open a new terminal and run the following command:
+5. Once the container is running in the `/workspaces/express-typescript-drizzle-zod-devcontainer` directory, open a new terminal and run the following command:
    ```bash
    npm run dev
    ```
