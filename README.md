@@ -1,8 +1,8 @@
-# Prehab Take Home REST API - Issac Holguin
+Express + Typescript REST API
 
-Hey team, here is my project!
+Simple exercises + users application. Having fun with Drizzle + Zod, some JWT token auth as well!
 
-This README is a summary of the project with instructions and explainations of the project.
+Also having fun with dev containers.
 
 ## Environment
 
